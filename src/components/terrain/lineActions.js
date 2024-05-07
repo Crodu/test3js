@@ -22,4 +22,19 @@ const createSegmentedLine = (terrain, points, minDistance) => {
   return newPoints;
 }
 
+export const nearestPointFromLines = (lines, pos) => lines.reduce((nearest, line) => {
+  const nearestInLine = line.reduce((nearestInLine, point) => {
+    const distance = pos.distanceTo(point);
+    if (distance < nearestInLine.distance) {
+      return { point, distance };
+    }
+    return nearestInLine;
+  }, { point: null, distance: Infinity });
+
+  if (nearestInLine.distance < nearest.distance) {
+    return nearestInLine;
+  }
+  return nearest;
+}, { point: null, distance: Infinity });
+
 export default createSegmentedLine;

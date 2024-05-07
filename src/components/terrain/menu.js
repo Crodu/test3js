@@ -1,32 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
+import styles from './styles.module.css';
+import { Card, Fab } from '@mui/material';
+import EquipmentsMenu from '../equipmentsMenu/equipmentsMenu';
 
 
 
 const Toolbar = ({handleAction}) => {
 
-  const ToolbarButton = ({text, action}) => {
+  const [equipMenuOpen, setEquipMenuOpen] = useState(null)
+
+  const handleClick = (e, action, type) => {
+    if (type === 'menu') {
+      return setEquipMenuOpen(e.currentTarget)
+    } return handleAction(action)
+  }
+
+  const ToolbarButton = ({text, action, type=null, ...props}) => {
     return (
-      <button
-        style={{
-          borderRadius: '50%',
-          backgroundColor: 'gray',
-          border: 'none',
-          width: '60px',
-          height: '60px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          cursor: 'pointer',
-        }}
-        onClick={() => handleAction(action)}
+      <Fab 
+        sx={{margin: '10px'}}
+        className={'menuButton'}
+        onClick={(e) => handleClick(e, action, type)}
+        color='primary'
+        {...props}
       >
         {text}
-      </button>
+      </Fab>
     );
   }
 
   return (
-    <div
+    <Card
       style={{
         position: 'fixed',
         bottom: 0,
@@ -36,24 +40,39 @@ const Toolbar = ({handleAction}) => {
         padding: '10px',
         margin: '25px',
         borderRadius: '5px',
-        boxShadow: '0px 2px 5px rgba(0, 0, 0, 0.1)',
         display: 'flex',
         zIndex: 1,
       }}
     >
-      <ToolbarButton
-        text="Camera"
-        action="camera"
-       />
-       <ToolbarButton
-        text="Line"
-        action="line"
-       />
-       <ToolbarButton
-        text="Button"
-        action="button"
-       />
-    </div>
+        <ToolbarButton
+          text="Camera"
+          action="camera"
+        />
+        <ToolbarButton
+          text="Line"
+          action="line"
+        />
+        <ToolbarButton
+          text="Cancel"
+          action="clear"
+        />
+        <EquipmentsMenu 
+          onSelect={(action) => handleAction(action)}
+          buttonEl={(props) => (
+            <ToolbarButton
+              text="Add..."
+              action="add"
+              type="menu"
+              {...props}	
+            />
+          )}
+        />
+        <ToolbarButton
+          text="Animate"
+          action="clear"
+        />
+        
+    </Card>
   );
 };
 

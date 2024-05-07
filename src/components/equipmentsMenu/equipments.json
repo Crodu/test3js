@@ -1,0 +1,19 @@
+{
+  "equipments": [
+    {
+      "name": "Equipment 1",
+      "type": "Type 1",
+      "description": "Description 1"
+    },
+    {
+      "name": "Equipment 2",
+      "type": "Type 2",
+      "description": "Description 2"
+    },
+    {
+      "name": "Equipment 3",
+      "type": "Type 3",
+      "description": "Description 3"
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import { useLoader } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import * as THREE from 'three'
 
-const TerrainMesh = ({cursor, onFinishLoading, onClick}) => {
+const TerrainMesh = ({cursor, onFinishLoading, onClick, onWheel, onPointerMove}) => {
   const heightmapTexture = useLoader(TextureLoader, 'heightmap.png');
   const color = useLoader(TextureLoader, 'color.png');
   const normal = useLoader(TextureLoader, 'normal.png');
@@ -73,20 +73,27 @@ const TerrainMesh = ({cursor, onFinishLoading, onClick}) => {
 
   const handleMouseMove = (e) => {
     mesh.current.worldToLocal(e.point)
-    cursor.current.position.copy(new THREE.Vector3(e.point.x, e.point.z, -e.point.y));
+    const pos = new THREE.Vector3(e.point.x, e.point.z, -e.point.y);
+    cursor.position.copy(pos);
+    onPointerMove({...e, pos});
   }
 
   const handleMouseClick = (e) => {
     mesh.current.worldToLocal(e.point)
-    onClick({...e, pos: new THREE.Vector3(e.point.x, e.point.z, -e.point.y)});
+    onClick({...e, pos: new THREE.Vector3(e.point.x, e.point.z, -e.point.y)}); 
+  }
+
+  const handleWheel = (e) => {
+    onWheel(e)
   }
 
   return (
     <mesh ref={mesh}
       rotation={[-Math.PI / 2, 0, 0]}
       onPointerMove={(e) => handleMouseMove(e)}
-      onPointerOver={() => (cursor.current.visible = true)}
-      onPointerOut={() => (cursor.current.visible = false)}
+      onPointerOver={() => (cursor.visible = true)}
+      onPointerOut={() => (cursor.visible = false)}
+      onWheel={(e) => handleWheel(e)}
       onClick={(e) => handleMouseClick(e)}
     >
       <planeGeometry ref={plane}

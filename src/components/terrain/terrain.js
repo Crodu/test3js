@@ -1,12 +1,16 @@
 // terrain.js
 import React, { Suspense, useEffect, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useLoader } from '@react-three/fiber'
 import TerrainMesh from './terrainMesh'
 import { Bvh, OrbitControls, Sky, Stats } from '@react-three/drei'
 import * as THREE from 'three'
 import Toolbar from './menu';
-import createSegmentedLine from './lineActions';
+import createSegmentedLine, { nearestPointFromLines } from './lineActions';
 import LineGenerator from '../lineGenerator/lineGenerator'
+import LoadingScreen from '../loadingScreen/loadingScreen'
+import EquipmentIcon from '../equipmentsMenu/equipmentIcon/equipmentIcon'
+import { GLTFLoader } from 'three/examples/jsm/Addons.js'
+import EquipmentGenerator from '../equipmentGenerator/equipmentGenerator'
 
 const InfinitePlane = () => {
   return (
@@ -17,46 +21,42 @@ const InfinitePlane = () => {
   );
 };
 
-const LoadingScreen = ({visible}) => {
-  return (
-    visible && (
-      <div style={{
-        position: 'absolute', 
-        top: 0, left: 0, 
-        width: '100vw', height: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        background: 'black', 
-        color: 'white',
-        zIndex: 2,
-        }}>
-        <h1>Loading...</h1>
-      </div>
-    )
-  );
-};
-
 const Terrain = () => {
   const [loading, setLoading] = useState(true)
 
   const [currentAction, setCurrentAction] = useState('camera')
+
+  const [currentCursor, setCurrentCursor] = useState()
 
   const [terrainMesh, setTerrainMesh] = useState(null)
 
   const [lines, setLines] = useState([])
 
   const [points, setPoints] = useState([])
+
+  const [equipments, setEquipments] = useState([])
   
   const sphere = useRef();
   const controls = useRef();
+  const equipIconCursor = useRef();
+  const equipmentsModels = useRef();
 
-  useEffect(() => {
-    console.log(lines)
-  }, [lines])
-
+  // useEffect(() => {
+  //   console.log(lines)
+  // }, [lines])
 
   const onTerrainClick = (e) => {
+
+    if (currentAction === 'addequip') {
+      const { pos } = e;
+      const newEquip = {
+        position: currentCursor.position.toArray(),
+        rotation: currentCursor.rotation.toArray(),
+        type: 'excavator'
+      }
+      setEquipments([...equipments, newEquip])
+    }
+
     if (currentAction === 'line') {
       const { pos } = e;
       if (lines.length >= 1) {
@@ -68,17 +68,40 @@ const Terrain = () => {
     }
   }
 
+  const handlePointerMove = (e) => {
+    const { pos } = e;
+    if (currentAction === 'addequip') {
+      const nearestPoint = nearestPointFromLines(lines, pos);
+      if (!nearestPoint.point) {
+        return;
+      }
+      if (nearestPoint.point.distanceTo(pos) < 0.8) {
+        currentCursor.position.copy(nearestPoint.point);
+      }
+    }
+  }
+
+  const onAddEquip = () => {
+    equipIconCursor.current.scale.set(0.1, 0.1, 0.1)
+    setCurrentCursor(equipIconCursor.current);
+  }
+
   const handleToolbarAction = (action) => {
     switch (action) {
       case 'camera':
+        resetCursor();
         controls.current.enabled = true;
         break
       case 'line':
+        resetCursor('purple');
         controls.current.enabled = false;
         break
-      case 'button':
-        setPoints([])
-        setLines([])
+      case 'addequip':
+        controls.current.enabled = false;
+        onAddEquip()
+        break
+      case 'clear':
+        onClear();
         break
       default:
         break
@@ -86,16 +109,36 @@ const Terrain = () => {
     setCurrentAction(action)
   }
 
+  const onClear = (color) => {
+    setPoints([]);
+    setLines([]);
+    setEquipments([]);
+    resetCursor(color);
+  }
+
+  const resetCursor = (color) => {
+    sphere.current.material.color = new THREE.Color(color || 'orange');
+    setCurrentCursor(sphere.current);
+  }
+
   const handleTerrainLoaded = (meshInfo) => {
     setLoading(false)
+    onClear();
     setTerrainMesh(meshInfo)
+  }
+
+  const handleWheel = (e) => {
+    if (currentAction === 'addequip') {
+      e.stopPropagation();
+      currentCursor.rotation.y += e.deltaY * 0.0025;
+    } 
   }
 
   return (
     <>
-    <LoadingScreen visible={loading} />
     <Toolbar handleAction={handleToolbarAction} />
-    <div style={{width:'100vw', height:'100vh'}}>
+    <LoadingScreen visible={loading} />
+    <div style={{width:'100vw', height:'100vh', zIndex: '-1'}}>
       <Canvas>
         <Stats />
         <OrbitControls
@@ -114,9 +157,11 @@ const Terrain = () => {
         <Suspense fallback={null}>
           <Bvh firstHitOnly enabled={true}>
             <TerrainMesh
-              cursor={sphere}
+              cursor={currentCursor}
               onClick={(e) => onTerrainClick(e)}
               onFinishLoading={(mesh) => handleTerrainLoaded(mesh)}
+              onPointerMove={(e) => handlePointerMove(e)}
+              onWheel={(e) => handleWheel(e)}
             />
           </Bvh>
         </Suspense>
@@ -125,6 +170,8 @@ const Terrain = () => {
           <sphereGeometry args={[0.2]} />
           <meshBasicMaterial color="orange" toneMapped={false} />
         </mesh>
+        <EquipmentIcon ref={equipIconCursor} />
+        <EquipmentGenerator equipments={equipments} ref={equipmentsModels} />
       </Canvas>
     </div>
     </>
