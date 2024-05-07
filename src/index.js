@@ -3,11 +3,27 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  json,
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+import Main from './components/main/main';
+import Terrain from './components/terrain/terrain';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/game" element={<Main />} />
+        <Route path="/terrain" element={<Terrain />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
 
