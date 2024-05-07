@@ -10,6 +10,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  HashRouter,
 } from "react-router-dom";
 import Main from './components/main/main';
 import Terrain from './components/terrain/terrain';
@@ -17,13 +18,13 @@ import Terrain from './components/terrain/terrain';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/game" element={<Main />} />
         <Route path="/terrain" element={<Terrain />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>
 );
 
