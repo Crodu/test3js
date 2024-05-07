@@ -5,7 +5,7 @@ import TerrainMesh from './terrainMesh'
 import { Bvh, OrbitControls, Sky, Stats } from '@react-three/drei'
 import * as THREE from 'three'
 import Toolbar from './menu';
-import createSegmentedLine, { nearestPointFromLines } from './lineActions';
+import createSegmentedLine, { nearestMeshFromPoint, nearestPointFromLines } from './lineActions';
 import LineGenerator from '../lineGenerator/lineGenerator'
 import LoadingScreen from '../loadingScreen/loadingScreen'
 import EquipmentIcon from '../equipmentsMenu/equipmentIcon/equipmentIcon'
@@ -46,14 +46,19 @@ const Terrain = () => {
   // }, [lines])
 
   const onTerrainClick = (e) => {
-
+    const pos = currentCursor.position;
     if (currentAction === 'addequip') {
-      const { pos } = e;
+      const {point, distance, line} = nearestPointFromLines(lines, pos);
+      const allLines = lines.reduce((acc, line) => [...acc, ...line], []);
+      console.log(allLines);
       const newEquip = {
         position: currentCursor.position.toArray(),
         rotation: currentCursor.rotation.toArray(),
+        inLine: distance === 0,
+        line: allLines,
         type: 'excavator'
       }
+      console.log(newEquip)
       setEquipments([...equipments, newEquip])
     }
 
@@ -64,7 +69,19 @@ const Terrain = () => {
         lines.pop();
         setLines(lines => [...lines, segPoints]);
       }
-      setLines(lines => [...lines, [pos]]);      
+      setLines(lines => [...lines, [pos]]);
+    }
+
+    if (currentAction === 'animate') {
+      const nearestEquip = nearestMeshFromPoint(equipmentsModels.current.children, pos);
+      if (!nearestEquip.mesh) {
+        return;
+      }
+      if (nearestEquip.distance < 0.8) {
+        nearestEquip.mesh.shouldAnimate = true;
+      }else{
+        return;
+      }
     }
   }
 
@@ -79,6 +96,19 @@ const Terrain = () => {
         currentCursor.position.copy(nearestPoint.point);
       }
     }
+
+    if (currentAction === 'animate') {
+      const nearestEquip = nearestMeshFromPoint(equipmentsModels.current.children, pos);
+      if (!nearestEquip.mesh) {
+        return;
+      }
+      if (nearestEquip.distance < 0.8) {
+        nearestEquip.mesh.scale.set(0.12, 0.12, 0.12)
+      }else{
+        nearestEquip.mesh.scale.set(0.1, 0.1, 0.1)
+      }
+    }
+
   }
 
   const onAddEquip = () => {
@@ -99,6 +129,10 @@ const Terrain = () => {
       case 'addequip':
         controls.current.enabled = false;
         onAddEquip()
+        break
+      case 'animate':
+        controls.current.enabled = false;
+        resetCursor('green');
         break
       case 'clear':
         onClear();
@@ -171,7 +205,10 @@ const Terrain = () => {
           <meshBasicMaterial color="orange" toneMapped={false} />
         </mesh>
         <EquipmentIcon ref={equipIconCursor} />
-        <EquipmentGenerator equipments={equipments} ref={equipmentsModels} />
+        <EquipmentGenerator 
+          equipments={equipments}
+          ref={equipmentsModels}
+        />
       </Canvas>
     </div>
     </>

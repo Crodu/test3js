@@ -26,15 +26,23 @@ export const nearestPointFromLines = (lines, pos) => lines.reduce((nearest, line
   const nearestInLine = line.reduce((nearestInLine, point) => {
     const distance = pos.distanceTo(point);
     if (distance < nearestInLine.distance) {
-      return { point, distance };
+      return { point, distance, line };
     }
     return nearestInLine;
-  }, { point: null, distance: Infinity });
+  }, { point: null, distance: Infinity, line: null });
 
   if (nearestInLine.distance < nearest.distance) {
     return nearestInLine;
   }
   return nearest;
-}, { point: null, distance: Infinity });
+}, { point: null, distance: Infinity, line: null});
+
+export const nearestMeshFromPoint = (meshes, point) => meshes.reduce((nearest, mesh) => {
+  const distance = point.distanceTo(mesh.position);
+  if (distance < nearest.distance) {
+    return { mesh, distance };
+  }
+  return nearest;
+}, { mesh: null, distance: Infinity });
 
 export default createSegmentedLine;

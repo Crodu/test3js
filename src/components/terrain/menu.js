@@ -69,7 +69,7 @@ const Toolbar = ({handleAction}) => {
         />
         <ToolbarButton
           text="Animate"
-          action="clear"
+          action="animate"
         />
         
     </Card>
